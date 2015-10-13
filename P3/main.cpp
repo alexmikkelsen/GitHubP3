@@ -6,7 +6,7 @@ int main(int, char)
 {
 	VideoCapture cap(0); // open the default camera
 	if (!cap.isOpened()) // check if we succeeded
-		return -1;
+		return -1; //CHANGE
 	Mat edges;
 	namedWindow("edges", 1);
 	for (;;)
