@@ -9,7 +9,7 @@ int main(int, char)
 		return -1; //CHANGE
 	Mat edges;
 	namedWindow("edges", 1);
-	for (;;)
+	for (;;)//HAHAHA haha ha
 	{
 		Mat frame;
 		cap >> frame; // get a new frame from camera
