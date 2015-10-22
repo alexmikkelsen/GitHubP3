@@ -1,6 +1,7 @@
 #include "opencv2/core/core.hpp" 
 #include "opencv2/highgui/highgui.hpp" 
 #include "opencv2/imgproc/imgproc.hpp"
+#include <math.h>
 
 
 using namespace std;
@@ -34,6 +35,19 @@ void trackbars(){
 	createTrackbar("S_MAX", "Trackbars", &S_MAX, S_MAX, on_trackbar);
 	createTrackbar("V_MIN", "Trackbars", &V_MIN, V_MAX, on_trackbar);
 	createTrackbar("V_MAX", "Trackbars", &V_MAX, V_MAX, on_trackbar);
+}
+
+double calc(Point i, Point j){
+	double x_i = i.x;
+	double y_i = i.y;
+
+	double x_j = j.x;
+	double y_j = j.y;
+
+	double x_d = x_i - x_j;
+	double y_d = y_i - y_j;
+
+	return sqrt(x_d*x_d + y_d*y_d);
 }
 
 int main() {
@@ -120,7 +134,7 @@ int main() {
 			for (int i = 0; i < convexDefects[contourIndex].size(); i++){
 				const Vec4i& vec = convexDefects[contourIndex][i];
 				float depth = vec[3] / 256; // Find the points furthest from the convex hull
-				if (depth > 10) // If the distance between the convex hull and the point is big enough, Run
+				if (depth > 40) // If the distance between the convex hull and the point is big enough, Run
 				{
 					int start = vec[0]; // Starting point of the defect on the contour
 					Point startPt(contours[contourIndex][start]); // Assign a point to the start location
@@ -133,10 +147,23 @@ int main() {
 					line(image, startPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between start and furthest
 					line(image, endPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between end and furthest
 					circle(image, furthestPt, 4, Scalar(255, 0, 0), 2); // Draw a little circle at the furthest point
+
+					double a = calc(startPt, endPt);
+					double b = calc(startPt, furthestPt);
+					double c = calc(endPt, furthestPt);
+
+					int angle = ((acos((b*b + c*c - a*a) / (2 * b*c))) * 180) / 3.1415;
+
+
+					if (angle > 10){
+						String s = to_string(angle);
+						Point a = (0, 0);
+						putText(image, s, startPt, FONT_HERSHEY_PLAIN, 5, Scalar(255, 255, 255), 3, LINE_8, false);
+					}
 				}
 			}
 		}
 		imshow("Webcam", image);
-		waitKey(1); // Wait for a key press to show another image
+		waitKey(1);
 	}
 }
