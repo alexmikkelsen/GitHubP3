@@ -191,7 +191,7 @@ int main() {
 			t = convert.str();
 			putText(image, "Here " + t, Point(50, 50), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
 
-			char stance;
+			char stance = 'U';
 
 			//IF's with bounding box
 			if ((openHand == false || fingers < 2) && w / h > 0.6 && w / h < 1.2) {
@@ -202,7 +202,7 @@ int main() {
 				putText(image, "Karate", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
 				stance = 'B';
 			}
-			else if (fingers > 3){
+			else if (fingers > 2){
 				putText(image, "Open hand", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
 				stance = 'C';
 			}
@@ -211,16 +211,24 @@ int main() {
 				stance = 'D';
 			}
 
-			/*void keybd_event(BYTE bVirtualKey, BYTE bScanCode,
-			DWORD dwFlags, DWORD dwExtraInfo);
-
 			switch (stance){
-			case 'B' :
-			keybd_event(VK_SPACE, 0xb9,0,0);
-			keybd_event(VK_SPACE, 0xb9, KEYEVENTF_KEYUP, 0);
-			break;
-			}*/
-
+			case 'A':
+				keybd_event(VkKeyScan('A'), 0x9e, 0, 0);
+				keybd_event(VkKeyScan('A'), 0x9e, KEYEVENTF_KEYUP, 0);
+				break;
+			case 'B':
+				keybd_event(VkKeyScan('B'), 0xb0, 0, 0);
+				keybd_event(VkKeyScan('B'), 0xb0, KEYEVENTF_KEYUP, 0);
+				break;
+			case 'C':
+				keybd_event(VkKeyScan('C'), 0xae, 0, 0);
+				keybd_event(VkKeyScan('C'), 0xae, KEYEVENTF_KEYUP, 0);
+				break;
+			case 'D':
+				keybd_event(VkKeyScan('D'), 0xa0, 0, 0);
+				keybd_event(VkKeyScan('D'), 0xa0, KEYEVENTF_KEYUP, 0);
+				break;
+			}
 		}
 		imshow("Webcam", image);
 		waitKey(1);
