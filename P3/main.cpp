@@ -2,7 +2,7 @@
 #include "opencv2/highgui/highgui.hpp" 
 #include "opencv2/imgproc/imgproc.hpp"
 #include <math.h>
-
+#include <windows.h>
 
 using namespace std;
 using namespace cv;
@@ -63,6 +63,8 @@ int main() {
 
 	// Call the trackbars
 	trackbars();
+
+	bool openHand;
 
 	while (true){
 		// Store webcam input in image matrix
@@ -125,11 +127,18 @@ int main() {
 		}
 
 		/// If the biggest contour area is larger than 200, draw it
-		if (area > 200){
+		if (area > 500){
 			/*
 			void drawContours(InputOutputArray image, InputArrayOfArrays contours, int contourIdx, const Scalar& color, int thickness, int lineType, InputArray hierarchy=noArray(), int maxLevel, Point offset=Point() )
 			*/
 			drawContours(image, hull, contourIndex, 255, 3, 8, vector<Vec4i>(), 0, Point());
+
+			//Bounding Box
+			Rect boundRect = boundingRect(contours[contourIndex]);
+			rectangle(image, boundRect.tl(), boundRect.br(), Scalar(255, 255, 255), 2, 8, 0);
+
+			int fingers = 0;
+			int extraFinger;
 
 			for (int i = 0; i < convexDefects[contourIndex].size(); i++){
 				const Vec4i& vec = convexDefects[contourIndex][i];
@@ -138,15 +147,12 @@ int main() {
 				{
 					int start = vec[0]; // Starting point of the defect on the contour
 					Point startPt(contours[contourIndex][start]); // Assign a point to the start location
+
 					int end = vec[1]; // Ending point of the defect on the contour
 					Point endPt(contours[contourIndex][end]);// Assign a point to the end location
+
 					int furthest = vec[2]; // Point of the defect, furthest away from the convex hull
 					Point furthestPt(contours[contourIndex][furthest]); // Assign a point to the furthest away location
-
-					line(image, startPt, endPt, Scalar(0, 0, 255), 1); // Draw line between start and end
-					line(image, startPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between start and furthest
-					line(image, endPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between end and furthest
-					circle(image, furthestPt, 4, Scalar(255, 0, 0), 2); // Draw a little circle at the furthest point
 
 					double a = calc(startPt, endPt);
 					double b = calc(startPt, furthestPt);
@@ -154,14 +160,67 @@ int main() {
 
 					int angle = ((acos((b*b + c*c - a*a) / (2 * b*c))) * 180) / 3.1415;
 
+					openHand = false;
 
 					if (angle > 10){
-						String s = to_string(angle);
-						Point a = (0, 0);
-						putText(image, s, startPt, FONT_HERSHEY_PLAIN, 5, Scalar(255, 255, 255), 3, LINE_8, false);
+						openHand = true;
+						fingers += 1;
+						extraFinger = fingers + 1;
+
+						line(image, startPt, endPt, Scalar(0, 0, 255), 1); // Draw line between start and end
+						line(image, startPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between start and furthest
+						line(image, endPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between end and furthest
+						circle(image, furthestPt, 4, Scalar(255, 0, 0), 2); // Draw a little circle at the furthest point
+
+						if (extraFinger == 2){
+							String s = to_string(fingers);
+							putText(image, s, startPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
+						}
+						String t = to_string(extraFinger);
+						putText(image, t, endPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
 					}
 				}
 			}
+			//Showing releationship between height and width
+			float w = (float)boundRect.width;
+			float h = (float)boundRect.height;
+			float lol = w / h;
+			String t;
+			ostringstream convert;
+			convert << lol;
+			t = convert.str();
+			putText(image, "Here " + t, Point(50, 50), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
+
+			char stance;
+
+			//IF's with bounding box
+			if ((openHand == false || fingers < 2) && w / h > 0.6 && w / h < 1.2) {
+				putText(image, "Fist", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				stance = 'A';
+			}
+			else if (w / h < 0.4){
+				putText(image, "Karate", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				stance = 'B';
+			}
+			else if (fingers > 3){
+				putText(image, "Open hand", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				stance = 'C';
+			}
+			else if (fingers == 1 || fingers == 2){
+				putText(image, "Peace", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				stance = 'D';
+			}
+
+			/*void keybd_event(BYTE bVirtualKey, BYTE bScanCode,
+			DWORD dwFlags, DWORD dwExtraInfo);
+
+			switch (stance){
+			case 'B' :
+			keybd_event(VK_SPACE, 0xb9,0,0);
+			keybd_event(VK_SPACE, 0xb9, KEYEVENTF_KEYUP, 0);
+			break;
+			}*/
+
 		}
 		imshow("Webcam", image);
 		waitKey(1);
