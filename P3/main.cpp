@@ -14,28 +14,30 @@ int S_MAX = 255;
 int V_MIN = 0;
 int V_MAX = 255;
 
-void on_trackbar(int, void*){
 
-}
 
-void trackbars(){
-	namedWindow("Trackbars", 0);
-
-	char TrackbarName[50];
-	sprintf(TrackbarName, "H_MIN", H_MIN);
-	sprintf(TrackbarName, "H_MAX", H_MAX);
-	sprintf(TrackbarName, "S_MIN", S_MIN);
-	sprintf(TrackbarName, "S_MAX", S_MAX);
-	sprintf(TrackbarName, "V_MIN", V_MIN);
-	sprintf(TrackbarName, "V_MAX", V_MAX);
-
-	createTrackbar("H_MIN", "Trackbars", &H_MIN, H_MAX, on_trackbar);
-	createTrackbar("H_MAX", "Trackbars", &H_MAX, H_MAX, on_trackbar);
-	createTrackbar("S_MIN", "Trackbars", &S_MIN, S_MAX, on_trackbar);
-	createTrackbar("S_MAX", "Trackbars", &S_MAX, S_MAX, on_trackbar);
-	createTrackbar("V_MIN", "Trackbars", &V_MIN, V_MAX, on_trackbar);
-	createTrackbar("V_MAX", "Trackbars", &V_MAX, V_MAX, on_trackbar);
-}
+//void on_trackbar(int, void*){
+//
+//}
+//
+//void trackbars(){
+//	namedWindow("Trackbars", 0);
+//
+//	char TrackbarName[50];
+//	sprintf(TrackbarName, "H_MIN", H_MIN);
+//	sprintf(TrackbarName, "H_MAX", H_MAX);
+//	sprintf(TrackbarName, "S_MIN", S_MIN);
+//	sprintf(TrackbarName, "S_MAX", S_MAX);
+//	sprintf(TrackbarName, "V_MIN", V_MIN);
+//	sprintf(TrackbarName, "V_MAX", V_MAX);
+//
+//	createTrackbar("H_MIN", "Trackbars", &H_MIN, H_MAX, on_trackbar);
+//	createTrackbar("H_MAX", "Trackbars", &H_MAX, H_MAX, on_trackbar);
+//	createTrackbar("S_MIN", "Trackbars", &S_MIN, S_MAX, on_trackbar);
+//	createTrackbar("S_MAX", "Trackbars", &S_MAX, S_MAX, on_trackbar);
+//	createTrackbar("V_MIN", "Trackbars", &V_MIN, V_MAX, on_trackbar);
+//	createTrackbar("V_MAX", "Trackbars", &V_MAX, V_MAX, on_trackbar);
+//}
 
 double calc(Point i, Point j){
 	double x_i = i.x;
@@ -50,19 +52,37 @@ double calc(Point i, Point j){
 	return sqrt(x_d*x_d + y_d*y_d);
 }
 
-int main() {
-	// Creating two matrices to store the images in
-	Mat image, image2;
+Mat threshold(Mat i){
+	Mat img;
 
 	// Creating a filter for erosion and dilation
 	Mat element = Mat::ones(10, 10, CV_8UC1);
 
+	// Convert input to HSV and store in 2nd matrix
+	cvtColor(i, img, CV_BGR2HSV);
+
+	// Threshold image2 based on the input from trackbars()
+	inRange(img, Scalar(H_MIN, S_MIN, V_MIN, 0), Scalar(H_MAX, S_MAX, V_MAX, 0), img);
+
+	// Show thresholded image
+	imshow("Thresholding", img);
+
+	// "Opening" the thresholded picture
+	erode(img, img, element);
+	dilate(img, img, element);
+
+	return img;
+}
+
+int main() {
+	// Creating two matrices to store the images in
+	Mat image;
+
 	// Get input from webcam
 	VideoCapture cap(0);
-	namedWindow("Webcam");
 
 	// Call the trackbars
-	trackbars();
+	//trackbars();
 
 	bool openHand;
 
@@ -70,18 +90,7 @@ int main() {
 		// Store webcam input in image matrix
 		cap >> image;
 
-		// Convert input to HSV and store in 2nd matrix
-		cvtColor(image, image2, CV_BGR2HSV);
-
-		// Threshold image2 based on the input from trackbars()
-		inRange(image2, Scalar(H_MIN, S_MIN, V_MIN, 0), Scalar(H_MAX, S_MAX, V_MAX, 0), image2);
-
-		// Show thresholded image
-		imshow("Thresholding", image2);
-
-		// "Opening" the thresholded picture
-		erode(image2, image2, element);
-		dilate(image2, image2, element);
+		Mat image2 = threshold(image);
 
 		// findContours() gets these two outputs
 		vector<vector<Point> > contours; // Used to store output contours from the findContours function
@@ -135,7 +144,7 @@ int main() {
 
 			//Bounding Box
 			Rect boundRect = boundingRect(contours[contourIndex]);
-			rectangle(image, boundRect.tl(), boundRect.br(), Scalar(255, 255, 255), 2, 8, 0);
+			//rectangle(image, boundRect.tl(), boundRect.br(), Scalar(255, 255, 255), 2, 8, 0);
 
 			int fingers = 0;
 			int extraFinger;
@@ -167,17 +176,17 @@ int main() {
 						fingers += 1;
 						extraFinger = fingers + 1;
 
-						line(image, startPt, endPt, Scalar(0, 0, 255), 1); // Draw line between start and end
-						line(image, startPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between start and furthest
-						line(image, endPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between end and furthest
-						circle(image, furthestPt, 4, Scalar(255, 0, 0), 2); // Draw a little circle at the furthest point
+						//line(image, startPt, endPt, Scalar(0, 0, 255), 1); // Draw line between start and end
+						//line(image, startPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between start and furthest
+						//line(image, endPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between end and furthest
+						//circle(image, furthestPt, 4, Scalar(255, 0, 0), 2); // Draw a little circle at the furthest point
 
 						if (extraFinger == 2){
 							String s = to_string(fingers);
-							putText(image, s, startPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
+							//putText(image, s, startPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
 						}
 						String t = to_string(extraFinger);
-						putText(image, t, endPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
+						//putText(image, t, endPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
 					}
 				}
 			}
@@ -185,26 +194,26 @@ int main() {
 			float w = (float)boundRect.width;
 			float h = (float)boundRect.height;
 			float lol = w / h;
-			String t;
+
 			ostringstream convert;
 			convert << lol;
-			t = convert.str();
-			putText(image, "Here " + t, Point(50, 50), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
+			String t = convert.str();
+			//putText(image, "Here " + t, Point(50, 50), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
 
 			char stance = 'U';
 
 			//IF's with bounding box
 			if ((openHand == false || fingers < 2) && w / h > 0.6 && w / h < 1.2) {
 				putText(image, "Fist", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
-				stance = 'A';
+				//stance = 'A';
 			}
 			else if (w / h < 0.4){
 				putText(image, "Karate", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
-				stance = 'B';
+				//stance = 'B';
 			}
 			else if (fingers > 2){
 				putText(image, "Open hand", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
-				stance = 'C';
+				//stance = 'C';
 			}
 			else if (fingers == 1 || fingers == 2){
 				putText(image, "Peace", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
@@ -212,21 +221,22 @@ int main() {
 			}
 
 			switch (stance){
-			case 'A':
+				/*case 'A':
 				keybd_event(VkKeyScan('A'), 0x9e, 0, 0);
 				keybd_event(VkKeyScan('A'), 0x9e, KEYEVENTF_KEYUP, 0);
 				break;
-			case 'B':
+				case 'B':
 				keybd_event(VkKeyScan('B'), 0xb0, 0, 0);
 				keybd_event(VkKeyScan('B'), 0xb0, KEYEVENTF_KEYUP, 0);
 				break;
-			case 'C':
+				case 'C':
 				keybd_event(VkKeyScan('C'), 0xae, 0, 0);
 				keybd_event(VkKeyScan('C'), 0xae, KEYEVENTF_KEYUP, 0);
-				break;
+				break;*/
 			case 'D':
-				keybd_event(VkKeyScan('D'), 0xa0, 0, 0);
-				keybd_event(VkKeyScan('D'), 0xa0, KEYEVENTF_KEYUP, 0);
+				keybd_event(VK_SPACE, 0xb9, 0, 0);
+				Sleep(150);
+				keybd_event(VK_SPACE, 0xb9, KEYEVENTF_KEYUP, 0);
 				break;
 			}
 		}
