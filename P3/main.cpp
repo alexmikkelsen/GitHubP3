@@ -76,7 +76,7 @@ Mat threshold(Mat i){
 
 int main() {
 	// Creating two matrices to store the images in
-	Mat image;
+	Mat image0, image;
 
 	// Get input from webcam
 	VideoCapture cap(0);
@@ -88,18 +88,20 @@ int main() {
 
 	while (true){
 		// Store webcam input in image matrix
-		cap >> image;
+		cap >> image0;
+
+		resize(image0, image, Size(), 0.5, 0.5, INTER_AREA);
 
 		Mat image2 = threshold(image);
 
 		// findContours() gets these two outputs
 		vector<vector<Point> > contours; // Used to store output contours from the findContours function
-		vector<Vec4i> hierarchy; // Used to store the hierarchy of contours. Ex. Parent/Child
+		//vector<Vec4i> hierarchy; // Used to store the hierarchy of contours. Ex. Parent/Child
 
 		/*
 		void findContours(InputOutputArray image, OutputArrayOfArrays contours, OutputArray hierarchy, int mode, int method, Point offset=Point())
 		*/
-		findContours(image2, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+		findContours(image2, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 		/// Find the convex hull object for each contour, and find convexity defects
 		vector<vector<Point> >hull(contours.size()); // Output for convexHull() stored in a vector of points
@@ -152,7 +154,7 @@ int main() {
 			for (int i = 0; i < convexDefects[contourIndex].size(); i++){
 				const Vec4i& vec = convexDefects[contourIndex][i];
 				float depth = vec[3] / 256; // Find the points furthest from the convex hull
-				if (depth > 40) // If the distance between the convex hull and the point is big enough, Run
+				if (depth > 20) // If the distance between the convex hull and the point is big enough, Run
 				{
 					int start = vec[0]; // Starting point of the defect on the contour
 					Point startPt(contours[contourIndex][start]); // Assign a point to the start location
@@ -204,43 +206,62 @@ int main() {
 
 			//IF's with bounding box
 			if ((openHand == false || fingers < 2) && w / h > 0.6 && w / h < 1.2) {
-				putText(image, "Fist", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
-				//stance = 'A';
+				putText(image0, "Fist", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				stance = 'A';
 			}
 			else if (w / h < 0.4){
-				putText(image, "Karate", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
-				//stance = 'B';
+				putText(image0, "Karate", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				stance = 'B';
 			}
 			else if (fingers > 2){
-				putText(image, "Open hand", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
-				//stance = 'C';
+				putText(image0, "Open hand", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				stance = 'C';
 			}
 			else if (fingers == 1 || fingers == 2){
-				putText(image, "Peace", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
+				putText(image0, "Peace", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
 				stance = 'D';
 			}
 
+			static bool resB = false, resC = false, resD = false;
+
 			switch (stance){
-				/*case 'A':
-				keybd_event(VkKeyScan('A'), 0x9e, 0, 0);
-				keybd_event(VkKeyScan('A'), 0x9e, KEYEVENTF_KEYUP, 0);
+			case 'A':
+				if (resB == true || resC == true || resD == true){
+					resB = false;
+					resC = false;
+					resD = false;
+				}
 				break;
-				case 'B':
-				keybd_event(VkKeyScan('B'), 0xb0, 0, 0);
-				keybd_event(VkKeyScan('B'), 0xb0, KEYEVENTF_KEYUP, 0);
+			case 'B':
+				if (resB == false){
+					keybd_event(VK_LCONTROL, 0x9d, 0, 0);
+					keybd_event(VK_LCONTROL, 0x9d, KEYEVENTF_KEYUP, 0);
+					resB = true;
+				}
 				break;
-				case 'C':
-				keybd_event(VkKeyScan('C'), 0xae, 0, 0);
-				keybd_event(VkKeyScan('C'), 0xae, KEYEVENTF_KEYUP, 0);
-				break;*/
+			case 'C':
+				if (resC == false){
+					keybd_event(VK_SPACE, 0xb9, 0, 0);
+					Sleep(150);
+					keybd_event(VK_SPACE, 0xb9, KEYEVENTF_KEYUP, 0);
+					Sleep(350);
+					keybd_event(VK_SPACE, 0xb9, 0, 0);
+					Sleep(150);
+					keybd_event(VK_SPACE, 0xb9, KEYEVENTF_KEYUP, 0);
+					resC = true;
+				}
+				break;
 			case 'D':
-				keybd_event(VK_SPACE, 0xb9, 0, 0);
-				Sleep(150);
-				keybd_event(VK_SPACE, 0xb9, KEYEVENTF_KEYUP, 0);
+				if (resD == false){
+					keybd_event(VK_SPACE, 0xb9, 0, 0);
+					Sleep(80);
+					keybd_event(VK_SPACE, 0xb9, KEYEVENTF_KEYUP, 0);
+					resD = true;
+				}
 				break;
 			}
 		}
-		imshow("Webcam", image);
+		imshow("Webcam", image0);
 		waitKey(1);
 	}
 }
