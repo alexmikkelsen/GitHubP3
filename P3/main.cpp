@@ -3,8 +3,11 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <math.h>
 #include <windows.h>
+#include <chrono>
+#include <iostream>
 
 using namespace std;
+using namespace std::chrono;
 using namespace cv;
 
 int H_MIN = 35; //Ideal value = 35
@@ -87,6 +90,13 @@ int main() {
 	bool openHand;
 
 	while (true){
+		
+		//auto duration = 0;
+
+		//String latency;
+
+		//high_resolution_clock::time_point t1 = high_resolution_clock::now();
+		
 		// Store webcam input in image matrix
 		cap >> image0;
 
@@ -142,7 +152,7 @@ int main() {
 			/*
 			void drawContours(InputOutputArray image, InputArrayOfArrays contours, int contourIdx, const Scalar& color, int thickness, int lineType, InputArray hierarchy=noArray(), int maxLevel, Point offset=Point() )
 			*/
-			drawContours(image, hull, contourIndex, 255, 3, 8, vector<Vec4i>(), 0, Point());
+			//drawContours(image, hull, contourIndex, 255, 3, 8, vector<Vec4i>(), 0, Point());
 
 			//Bounding Box
 			Rect boundRect = boundingRect(contours[contourIndex]);
@@ -176,18 +186,18 @@ int main() {
 					if (angle > 10){
 						openHand = true;
 						fingers += 1;
-						extraFinger = fingers + 1;
+						//extraFinger = fingers + 1;
 
 						//line(image, startPt, endPt, Scalar(0, 0, 255), 1); // Draw line between start and end
 						//line(image, startPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between start and furthest
 						//line(image, endPt, furthestPt, Scalar(0, 0, 255), 1); // Draw line between end and furthest
 						//circle(image, furthestPt, 4, Scalar(255, 0, 0), 2); // Draw a little circle at the furthest point
 
-						if (extraFinger == 2){
-							String s = to_string(fingers);
-							//putText(image, s, startPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
-						}
-						String t = to_string(extraFinger);
+						//if (extraFinger == 2){
+						//	String s = to_string(fingers);
+						//	putText(image, s, startPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
+						//}
+						//String t = to_string(extraFinger);
 						//putText(image, t, endPt, FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
 					}
 				}
@@ -195,32 +205,39 @@ int main() {
 			//Showing releationship between height and width
 			float w = (float)boundRect.width;
 			float h = (float)boundRect.height;
-			float lol = w / h;
+			float ratio = w / h;
 
-			ostringstream convert;
-			convert << lol;
-			String t = convert.str();
+			/*ostringstream convert;
+			convert << ratio;
+			String t = convert.str();*/
 			//putText(image, "Here " + t, Point(50, 50), FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 0, 255), 3, LINE_8, false);
 
 			char stance = 'U';
 
 			//IF's with bounding box
-			if ((openHand == false || fingers < 2) && w / h > 0.6 && w / h < 1.2) {
+			//high_resolution_clock::time_point t1 = high_resolution_clock::now();
+			if ((openHand == false || fingers < 2) && ratio > 0.6 && ratio < 1.2) {
 				putText(image0, "Fist", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
 				stance = 'A';
+				//latency = "Fist";
 			}
-			else if (w / h < 0.4){
+			else if (ratio < 0.4){
 				putText(image0, "Karate", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
 				stance = 'B';
+				//latency = "Karate";
 			}
 			else if (fingers > 2){
 				putText(image0, "Open hand", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
 				stance = 'C';
+				//latency = "Open hand";
 			}
 			else if (fingers == 1 || fingers == 2){
 				putText(image0, "Peace", Point(200, 200), FONT_HERSHEY_SIMPLEX, 3, Scalar(255, 255, 255), 3, LINE_8, false);
 				stance = 'D';
+				//latency = "Peace";
 			}
+			//high_resolution_clock::time_point t2 = high_resolution_clock::now();
+			//duration = duration_cast<milliseconds>(t2 - t1).count();
 
 			static bool resB = false, resC = false, resD = false;
 
@@ -263,5 +280,13 @@ int main() {
 		}
 		imshow("Webcam", image0);
 		waitKey(1);
+
+		//high_resolution_clock::time_point t2 = high_resolution_clock::now();
+
+		//duration = duration_cast<milliseconds>(t2 - t1).count();
+
+		/*if (duration > 0){
+			cout << "The duration is: " << duration << " ms for hand sign: " << latency << endl;
+		}*/
 	}
 }
